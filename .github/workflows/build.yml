@@ -13,7 +13,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
         java-version: '17'
@@ -30,7 +30,6 @@ jobs:
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/res/values
 
-        # إنشاء ملف AndroidManifest.xml بسيط
         cat << 'EOF' > app/src/main/AndroidManifest.xml
         <manifest xmlns:android="http://schemas.android.com/apk/res/android"
             package="com.example.bridge">
@@ -48,7 +47,6 @@ jobs:
         </manifest>
         EOF
 
-        # إنشاء ملف الواجهة activity_main.xml
         cat << 'EOF' > app/src/main/res/layout/activity_main.xml
         <?xml version="1.0" encoding="utf-8"?>
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -67,7 +65,6 @@ jobs:
         </LinearLayout>
         EOF
 
-        # إنشاء ملف الـ Java الأساسي MainActivity.java
         cat << 'EOF' > app/src/main/java/com/example/bridge/MainActivity.java
         package com.example.bridge;
         import android.app.Activity;
@@ -81,7 +78,6 @@ jobs:
         }
         EOF
 
-        # إنشاء ملف build.gradle الخاص بالتطبيق
         cat << 'EOF' > app/build.gradle
         plugins {
             id 'com.android.application'
@@ -100,7 +96,6 @@ jobs:
         }
         EOF
 
-        # إنشاء ملف الإعدادات الرئيسي settings.gradle
         cat << 'EOF' > settings.gradle
         pluginManagement {
             repositories {
@@ -120,20 +115,17 @@ jobs:
         include ':app'
         EOF
 
-        # إنشاء ملف build.gradle الجذري
         cat << 'EOF' > build.gradle
         plugins {
             id 'com.android.application' version '8.2.0' apply false
         }
         EOF
 
-        # إنشاء ملف gradle.properties
         cat << 'EOF' > gradle.properties
         android.useAndroidX=true
         org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
         EOF
 
-        # إنشاء مجلد gradle/wrapper مع ملفات التشغيل
         mkdir -p gradle/wrapper
         cat << 'EOF' > gradle/wrapper/gradle-wrapper.properties
         distributionBase=GRADLE_USER_HOME
