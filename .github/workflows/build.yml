@@ -1,0 +1,161 @@
+name: Build Simple APK
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Accept Android SDK licenses
+      run: yes | sdkmanager --licenses || true
+
+    - name: Create basic project structure
+      run: |
+        mkdir -p app/src/main/java/com/example/bridge
+        mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/res/values
+
+        # إنشاء ملف AndroidManifest.xml بسيط
+        cat << 'EOF' > app/src/main/AndroidManifest.xml
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+            package="com.example.bridge">
+            <application
+                android:label="Bridge App"
+                android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+                <activity android:name=".MainActivity"
+                    android:exported="true">
+                    <intent-filter>
+                        <action android:name="android.intent.action.MAIN" />
+                        <category android:name="android.intent.category.LAUNCHER" />
+                    </intent-filter>
+                </activity>
+            </application>
+        </manifest>
+        EOF
+
+        # إنشاء ملف الواجهة activity_main.xml
+        cat << 'EOF' > app/src/main/res/layout/activity_main.xml
+        <?xml version="1.0" encoding="utf-8"?>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="20dp"
+            android:background="#121212">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="تطبيق الجسر الجاهز"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"/>
+        </LinearLayout>
+        EOF
+
+        # إنشاء ملف الـ Java الأساسي MainActivity.java
+        cat << 'EOF' > app/src/main/java/com/example/bridge/MainActivity.java
+        package com.example.bridge;
+        import android.app.Activity;
+        import android.os.Bundle;
+        public class MainActivity extends Activity {
+            @Override
+            protected void onCreate(Bundle savedInstanceState) {
+                super.onCreate(savedInstanceState);
+                setContentView(R.layout.activity_main);
+            }
+        }
+        EOF
+
+        # إنشاء ملف build.gradle الخاص بالتطبيق
+        cat << 'EOF' > app/build.gradle
+        plugins {
+            id 'com.android.application'
+        }
+        android {
+            compileSdk 34
+            defaultConfig {
+                applicationId "com.example.bridge"
+                minSdk 21
+                targetSdk 34
+                versionCode 1
+                versionName "1.0"
+            }
+        }
+        dependencies {
+        }
+        EOF
+
+        # إنشاء ملف الإعدادات الرئيسي settings.gradle
+        cat << 'EOF' > settings.gradle
+        pluginManagement {
+            repositories {
+                google()
+                mavenCentral()
+                gradlePluginPortal()
+            }
+        }
+        dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
+        rootProject.name = "PhoneBridge-Pro"
+        include ':app'
+        EOF
+
+        # إنشاء ملف build.gradle الجذري
+        cat << 'EOF' > build.gradle
+        plugins {
+            id 'com.android.application' version '8.2.0' apply false
+        }
+        EOF
+
+        # إنشاء ملف gradle.properties
+        cat << 'EOF' > gradle.properties
+        android.useAndroidX=true
+        org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+        EOF
+
+        # إنشاء مجلد gradle/wrapper مع ملفات التشغيل
+        mkdir -p gradle/wrapper
+        cat << 'EOF' > gradle/wrapper/gradle-wrapper.properties
+        distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
+        networkTimeout=10000
+        validateDistributionUrl=true
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists
+        EOF
+
+    - name: Download Gradle Wrapper
+      run: gradle wrapper || true
+
+    - name: Build Debug APK
+      run: |
+        export ANDROID_HOME=$ANDROID_SDK_ROOT
+        chmod +x gradlew || true
+        ./gradlew assembleDebug || gradle assembleDebug
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
